@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Task Management</h1>
+
+<div>
+    <h2>Add New Task</h2>
+    <form id="taskForm">
+        <div class="form-group">
+            <label for="priority">Priority (lower = higher priority):</label>
+            <input type="number" id="priority" name="priority" min="1" required>
+        </div>
+        <div class="form-group">
+            <label for="deadline">Deadline (seconds from now):</label>
+            <input type="number" id="deadline" name="deadline" min="1" required>
+        </div>
+        <div class="form-group">
+            <label for="required_cpu">Required CPU Cores:</label>
+            <input type="number" id="required_cpu" name="required_cpu" step="0.1" required>
+        </div>
+        <div class="form-group">
+            <label for="required_memory">Required Memory (GB):</label>
+            <input type="number" id="required_memory" name="required_memory" step="0.1" required>
+        </div>
+        <button type="submit">Add Task</button>
+    </form>
+</div>
+
+<script>
+    $('#taskForm').submit(function(e) {
+        e.preventDefault();
+        
+        const data = {
+            priority: parseInt($('#priority').val()),
+            deadline: parseFloat($('#deadline').val()),
+            required_cpu: parseFloat($('#required_cpu').val()),
+            required_memory: parseFloat($('#required_memory').val())
+        };
+
+        $.ajax({
+            url: '/api/tasks',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                alert('Task added successfully!');
+                $('#taskForm')[0].reset();
+            },
+            error: function() {
+                alert('Error adding task!');
+            }
+        });
+    });
+</script>
+{% endblock %} 

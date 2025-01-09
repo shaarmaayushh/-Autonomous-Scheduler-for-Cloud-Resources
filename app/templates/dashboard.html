@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Resource Dashboard</h1>
+
+<div>
+    <h2>Add New Resource</h2>
+    <form id="resourceForm">
+        <div class="form-group">
+            <label for="cpu_cores">CPU Cores:</label>
+            <input type="number" id="cpu_cores" name="cpu_cores" step="0.1" required>
+        </div>
+        <div class="form-group">
+            <label for="memory_gb">Memory (GB):</label>
+            <input type="number" id="memory_gb" name="memory_gb" step="0.1" required>
+        </div>
+        <button type="submit">Add Resource</button>
+    </form>
+</div>
+
+<!-- New Resource Statistics Table -->
+<div>
+    <h2>Resource Statistics</h2>
+    <table id="resourceStats" style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="padding: 12px; border: 1px solid #ddd;">Resource ID</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">Total CPU</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">Available CPU</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">CPU Usage %</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">Total Memory</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">Available Memory</th>
+                <th style="padding: 12px; border: 1px solid #ddd;">Memory Usage %</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Will be populated dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h2>Resource Utilization</h2>
+    <div id="cpuChart" class="chart"></div>
+    <div id="memoryChart" class="chart"></div>
+</div>
+
+<script>
+    // Handle form submission
+    $('#resourceForm').submit(function(e) {
+        e.preventDefault();
+        
+        const data = {
+            cpu_cores: parseFloat($('#cpu_cores').val()),
+            memory_gb: parseFloat($('#memory_gb').val())
+        };
+
+        $.ajax({
+            url: '/api/resources',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                alert('Resource added successfully!');
+                $('#resourceForm')[0].reset();
+                updateCharts();  // Update immediately after adding
+            },
+            error: function() {
+                alert('Error adding resource!');
+            }
+        });
+    });
+
+    // Update charts and statistics
+    function updateCharts() {
+        $.get('/api/metrics', function(data) {
+            // Update charts
+            const cpuData = [{
+                y: data.cpu_utilization,
+                type: 'bar',
+                name: 'CPU Utilization'
+            }];
+
+            const memoryData = [{
+                y: data.memory_utilization,
+                type: 'bar',
+                name: 'Memory Utilization'
+            }];
+
+            const layout = {
+                yaxis: {
+                    range: [0, 100],
+                    title: 'Utilization (%)'
+                },
+                xaxis: {
+                    title: 'Resource ID'
+                }
+            };
+
+            Plotly.newPlot('cpuChart', cpuData, {...layout, title: 'CPU Utilization'});
+            Plotly.newPlot('memoryChart', memoryData, {...layout, title: 'Memory Utilization'});
+
+            // Update statistics table
+            let tableHtml = '';
+            data.resources.forEach((resource, index) => {
+                const cpuUsagePercent = ((resource.total_cpu - resource.available_cpu) / resource.total_cpu * 100).toFixed(2);
+                const memoryUsagePercent = ((resource.total_memory - resource.available_memory) / resource.total_memory * 100).toFixed(2);
+                
+                tableHtml += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${index}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${resource.total_cpu.toFixed(1)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${resource.available_cpu.toFixed(1)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${cpuUsagePercent}%</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${resource.total_memory.toFixed(1)} GB</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${resource.available_memory.toFixed(1)} GB</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${memoryUsagePercent}%</td>
+                    </tr>
+                `;
+            });
+            $('#resourceStats tbody').html(tableHtml);
+        });
+    }
+
+    // Update charts and stats every 5 seconds
+    setInterval(updateCharts, 5000);
+    updateCharts();
+</script>
+{% endblock %} 
