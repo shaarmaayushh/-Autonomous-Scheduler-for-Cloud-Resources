@@ -138,11 +138,6 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 
 ---
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## Conclusion
 The **Autonomous Scheduler for Cloud Resources** demonstrates the immense potential of data structures in solving real-world problems in cloud computing. By optimizing resource allocation and scaling, this project provides a foundation for efficient, reliable, and cost-effective cloud resource management—a critical need in today’s technology-driven world.
 
